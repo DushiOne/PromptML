@@ -51,7 +51,122 @@ const templates = [
                 }
             }
         ]
-    }
+    },
+    {
+        name: 'GPT-3 Completion',
+        fields: [
+            { name: 'prompt', required: true, type: 'string' },
+            { name: 'max_tokens', required: true, type: 'number' },
+            { name: 'temperature', required: true, type: 'number' },
+        ]
+    },
+    {
+        name: 'Claude 2 and Earlier',
+        fields: [
+            { name: 'prompt', required: true, type: 'string' },
+            { name: 'max_tokens_to_sample', required: true, type: 'number' },
+            { name: 'temperature', required: true, type: 'number' },
+        ]
+    },
+    {
+        name: 'Claude 3 (Messages API)',
+        fields: [
+            {
+                name: 'messages',
+                required: true,
+                type: 'array',
+                arrayType: 'object',
+                objectFields: {
+                    role: { required: true, type: 'string' },
+                    content: { required: true, type: 'string' },
+                }
+            },
+            { name: 'max_tokens', required: true, type: 'number' },
+            { name: 'temperature', required: true, type: 'number' },
+        ]
+    },
+    {
+        name: 'Meta Models (LLaMA, OPT)',
+        fields: [
+            { name: 'prompt', required: true, type: 'string' },
+            { name: 'max_tokens', required: true, type: 'number' },
+            { name: 'temperature', required: true, type: 'number' },
+        ]
+    },
+    {
+        name: 'Amazon Titan',
+        fields: [
+            { name: 'inputText', required: true, type: 'string' },
+            {
+                name: 'textGenerationConfig',
+                required: true,
+                type: 'object',
+                objectFields: {
+                    maxTokenCount: { required: true, type: 'number' },
+                    temperature: { required: true, type: 'number' },
+                    topP: { required: true, type: 'number' },
+                    stopSequences: { required: true, type: 'array' },
+                }
+            },
+        ]
+    },
+    {
+        name: 'Anthropic Claude on Bedrock',
+        fields: [
+            { name: 'prompt', required: true, type: 'string' },
+            { name: 'max_tokens_to_sample', required: true, type: 'number' },
+            { name: 'temperature', required: true, type: 'number' },
+            { name: 'top_k', required: true, type: 'number' },
+            { name: 'top_p', required: true, type: 'number' },
+            { name: 'stop_sequences', required: true, type: 'array' },
+        ]
+    },
+    {
+        name: 'AI21 Jurassic-2 on Bedrock',
+        fields: [
+            { name: 'prompt', required: true, type: 'string' },
+            { name: 'maxTokens', required: true, type: 'number' },
+            { name: 'temperature', required: true, type: 'number' },
+            { name: 'topP', required: true, type: 'number' },
+            { name: 'stopSequences', required: true, type: 'array' },
+            {
+                name: 'countPenalty',
+                required: true,
+                type: 'object',
+                objectFields: {
+                    scale: { required: true, type: 'number' },
+                }
+            },
+            {
+                name: 'presencePenalty',
+                required: true,
+                type: 'object',
+                objectFields: {
+                    scale: { required: true, type: 'number' },
+                }
+            },
+            {
+                name: 'frequencyPenalty',
+                required: true,
+                type: 'object',
+                objectFields: {
+                    scale: { required: true, type: 'number' },
+                }
+            },
+        ]
+    },
+    {
+        name: 'Cohere Command on Bedrock',
+        fields: [
+            { name: 'prompt', required: true, type: 'string' },
+            { name: 'max_tokens', required: true, type: 'number' },
+            { name: 'temperature', required: true, type: 'number' },
+            { name: 'p', required: true, type: 'number' },
+            { name: 'k', required: true, type: 'number' },
+            { name: 'stop_sequences', required: true, type: 'array' },
+            { name: 'return_likelihoods', required: true, type: 'string' },
+        ]
+    },
 ];
 function validatePrompt(text, template) {
     try {
@@ -74,6 +189,21 @@ function validatePrompt(text, template) {
                                     vscode.window.showErrorMessage(`Invalid type for field ${objField} in array item. Expected ${objFieldDef.type}.`);
                                     return false;
                                 }
+                            }
+                        }
+                    }
+                }
+                else if (field.type === 'object' && typeof promptObject[field.name] === 'object') {
+                    // Validate object fields
+                    if (field.objectFields) {
+                        for (const [objField, objFieldDef] of Object.entries(field.objectFields)) {
+                            if (objFieldDef.required && !(objField in promptObject[field.name])) {
+                                vscode.window.showErrorMessage(`Missing required field in object: ${objField}`);
+                                return false;
+                            }
+                            if (objField in promptObject[field.name] && typeof promptObject[field.name][objField] !== objFieldDef.type) {
+                                vscode.window.showErrorMessage(`Invalid type for field ${objField} in object. Expected ${objFieldDef.type}.`);
+                                return false;
                             }
                         }
                     }
@@ -320,7 +450,8 @@ function activate(context) {
                     }
                     snippetText += '\n';
                 });
-                snippetText += '}';
+                // Remove the last closing brace
+                // snippetText += '}';
                 completionItem.insertText = new vscode.SnippetString(snippetText);
                 completionItems.push(completionItem);
             }
