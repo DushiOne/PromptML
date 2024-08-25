@@ -105,25 +105,59 @@ function validatePrompt(text: string, template: Template): boolean {
 export function activate(context: vscode.ExtensionContext) {
     console.log('PromptML is now active!');
 
-    // Create a status bar item
+    // Create a status bar item for LLM detection
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     context.subscriptions.push(statusBarItem);
 
+    // Create a status bar item for the template selector
+    const templateSelector = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 200);
+    templateSelector.command = 'promptml.selectTemplate';
+    context.subscriptions.push(templateSelector);
+
+    let currentTemplate: Template | undefined;
+
     // Function to update status bar
-    function updateStatusBarItem(editor: vscode.TextEditor | undefined) {
+    function updateStatusBarItems(editor: vscode.TextEditor | undefined) {
         if (editor && (editor.document.languageId === 'prp' || editor.document.fileName.endsWith('.prp'))) {
-            statusBarItem.text = "LLM PROMPT DETECTED";
+            const text = editor.document.getText();
+            const isValid = currentTemplate ? validatePrompt(text, currentTemplate) : false;
+            statusBarItem.text = `LLM PROMPT DETECTED ${isValid ? '$(check)' : '$(x)'}`;
             statusBarItem.show();
+            templateSelector.text = currentTemplate ? `$(list-unordered) ${currentTemplate.name}` : "$(list-unordered) Select Template";
+            templateSelector.tooltip = "Click to select a template";
+            templateSelector.show();
         } else {
             statusBarItem.hide();
+            templateSelector.hide();
         }
     }
 
     // Update status bar when active editor changes
-    vscode.window.onDidChangeActiveTextEditor(updateStatusBarItem);
+    vscode.window.onDidChangeActiveTextEditor(updateStatusBarItems);
+
+    // Update status bar when the document is changed
+    vscode.workspace.onDidChangeTextDocument(event => {
+        if (vscode.window.activeTextEditor && event.document === vscode.window.activeTextEditor.document) {
+            updateStatusBarItems(vscode.window.activeTextEditor);
+        }
+    });
 
     // Update status bar for the current active editor
-    updateStatusBarItem(vscode.window.activeTextEditor);
+    updateStatusBarItems(vscode.window.activeTextEditor);
+
+    // Command to select a template
+    let selectTemplateDisposable = vscode.commands.registerCommand('promptml.selectTemplate', async () => {
+        const templateNames = templates.map(t => t.name);
+        const selectedTemplateName = await vscode.window.showQuickPick(templateNames, {
+            placeHolder: 'Select a template'
+        });
+
+        if (selectedTemplateName) {
+            currentTemplate = templates.find(t => t.name === selectedTemplateName);
+            updateStatusBarItems(vscode.window.activeTextEditor);
+            vscode.window.showInformationMessage(`Template selected: ${selectedTemplateName}`);
+        }
+    });
 
     let savePromptDisposable = vscode.commands.registerCommand('promptml.savePrompt', async () => {
         const editor = vscode.window.activeTextEditor;
@@ -341,7 +375,7 @@ export function activate(context: vscode.ExtensionContext) {
         '{' // Trigger character
     );
 
-    context.subscriptions.push(savePromptDisposable, savePromptWithVersionDisposable, checkAndSuggestDisposable, completionDisposable);
+    context.subscriptions.push(savePromptDisposable, savePromptWithVersionDisposable, checkAndSuggestDisposable, completionDisposable, selectTemplateDisposable);
 }
 
 function getSnippetPlaceholder(field: TemplateField, index: number): string {

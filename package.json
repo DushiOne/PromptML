@@ -34,6 +34,7 @@
     "activationEvents": [
         "onCommand:promptml.savePrompt",
         "onCommand:promptml.savePromptWithVersion",
+        "onCommand:promptml.selectTemplate",
         "onLanguage:json",
         "onLanguage:prp"
     ],
@@ -47,6 +48,10 @@
             {
                 "command": "promptml.savePromptWithVersion",
                 "title": "Save PromptML with Version"
+            },
+            {
+                "command": "promptml.selectTemplate",
+                "title": "PromptML: Select Template"
             },
             {
                 "command": "promptml.checkAndSuggestTemplate",
