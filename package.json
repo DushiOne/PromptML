@@ -1,7 +1,7 @@
 {
-    "name": "llm-prompt-saver",
-    "displayName": "LLM Prompt Saver",
-    "description": "Save and validate LLM prompts with versioning and templates",
+    "name": "promptml",
+    "displayName": "PromptML",
+    "description": "Create, save, and validate LLM prompts with versioning and templates",
     "version": "0.1.0",
     "publisher": "YourPublisherName",
     "engines": {
@@ -24,34 +24,68 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/YourUsername/llm-prompt-saver.git"
+        "url": "https://github.com/YourUsername/promptml.git"
     },
-    "homepage": "https://github.com/YourUsername/llm-prompt-saver/blob/main/README.md",
+    "homepage": "https://github.com/YourUsername/promptml/blob/main/README.md",
     "bugs": {
-        "url": "https://github.com/YourUsername/llm-prompt-saver/issues"
+        "url": "https://github.com/YourUsername/promptml/issues"
     },
     "license": "MIT",
     "activationEvents": [
-        "onCommand:llm-prompt-saver.savePrompt"
+        "onCommand:promptml.savePrompt",
+        "onCommand:promptml.savePromptWithVersion",
+        "onLanguage:json",
+        "onLanguage:prp"
     ],
     "main": "./out/extension.js",
     "contributes": {
         "commands": [
             {
-                "command": "llm-prompt-saver.savePrompt",
-                "title": "Save LLM Prompt"
+                "command": "promptml.savePrompt",
+                "title": "Save PromptML"
+            },
+            {
+                "command": "promptml.savePromptWithVersion",
+                "title": "Save PromptML with Version"
+            },
+            {
+                "command": "promptml.checkAndSuggestTemplate",
+                "title": "PromptML: Check and Suggest Template"
             }
         ],
         "configuration": {
-            "title": "LLM Prompt Saver",
+            "title": "PromptML",
             "properties": {
-                "llmPromptSaver.saveLocation": {
+                "promptml.saveLocation": {
                     "type": "string",
                     "default": "",
                     "description": "Custom location to save prompts. Leave empty to use the default location in the workspace."
                 }
             }
-        }
+        },
+        "keybindings": [
+            {
+                "command": "promptml.checkAndSuggestTemplate",
+                "key": "ctrl+alt+t",
+                "mac": "cmd+alt+t",
+                "when": "editorTextFocus"
+            }
+        ],
+        "languages": [
+            {
+                "id": "prp",
+                "extensions": [".prp"],
+                "aliases": ["PRP", "prp"],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "prp",
+                "scopeName": "source.json",
+                "path": "./syntaxes/json.tmLanguage.json"
+            }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
